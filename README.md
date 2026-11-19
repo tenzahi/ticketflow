@@ -18,5 +18,5 @@ d'une banque partenaire (simulée).
 ## Équipe
 - Tenzahi
 - Rim
-- Ghofrane
+- Ghoufrane
 - jassem
