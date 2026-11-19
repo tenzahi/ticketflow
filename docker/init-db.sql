@@ -1,0 +1,3 @@
+CREATE DATABASE ticket_db;
+CREATE DATABASE seat_db;
+CREATE DATABASE bank_db;
