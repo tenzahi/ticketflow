@@ -18,6 +18,15 @@ public class BankEndpoint {
     )
     @ResponsePayload
     public Element authorizePayment(@RequestPayload Element request) {
+
+        double amount = getAmount(request);
+
+        if (amount <= 0) {
+            throw new IllegalArgumentException(
+                    "Le montant du paiement doit être supérieur à zéro"
+            );
+        }
+
         return createResponse(
                 "AuthorizePaymentResponse",
                 true,
@@ -32,11 +41,38 @@ public class BankEndpoint {
     )
     @ResponsePayload
     public Element refundPayment(@RequestPayload Element request) {
+
+        double amount = getAmount(request);
+
+        if (amount <= 0) {
+            throw new IllegalArgumentException(
+                    "Le montant du remboursement doit être supérieur à zéro"
+            );
+        }
+
         return createResponse(
                 "RefundPaymentResponse",
                 true,
                 "REF-" + System.currentTimeMillis(),
                 "Remboursement effectué"
+        );
+    }
+
+    private double getAmount(Element request) {
+
+        var amountNodes = request.getElementsByTagNameNS(
+                NAMESPACE_URI,
+                "amount"
+        );
+
+        if (amountNodes.getLength() == 0) {
+            throw new IllegalArgumentException(
+                    "Le montant est obligatoire"
+            );
+        }
+
+        return Double.parseDouble(
+                amountNodes.item(0).getTextContent()
         );
     }
 

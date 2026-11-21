@@ -23,16 +23,10 @@ public class WebServiceConfig {
         servlet.setApplicationContext(applicationContext);
         servlet.setTransformWsdlLocations(true);
 
-        return ServletRegistrationBean(
+        return new ServletRegistrationBean<>(
                 servlet,
                 "/ws/*"
         );
-    }
-
-    private ServletRegistrationBean<MessageDispatcherServlet> ServletRegistrationBean(MessageDispatcherServlet servlet,
-            String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'ServletRegistrationBean'");
     }
 
     @Bean(name = "bank")
