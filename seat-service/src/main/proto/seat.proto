@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package ticketflow.seat.v1;
+
+option java_multiple_files = true;
+option java_package = "com.ticketflow.seat_service.grpc";
+
+service SeatService {
+  rpc HoldSeat(HoldSeatRequest) returns (HoldSeatResponse);
+  rpc WatchAvailability(WatchAvailabilityRequest) returns (stream AvailabilityUpdate);
+}
+
+message HoldSeatRequest {
+  int64 event_id = 1;
+  int64 seat_id = 2;
+}
+
+message HoldSeatResponse {
+  bool held = 1;
+}
+
+message WatchAvailabilityRequest {
+  int64 event_id = 1;
+}
+
+message AvailabilityUpdate {
+  int64 event_id = 1;
+  int64 seat_id = 2;
+  string seat_label = 3;
+  SeatStatus status = 4;
+}
+
+enum SeatStatus {
+  SEAT_STATUS_UNSPECIFIED = 0;
+  SEAT_STATUS_AVAILABLE = 1;
+  SEAT_STATUS_HELD = 2;
+}
