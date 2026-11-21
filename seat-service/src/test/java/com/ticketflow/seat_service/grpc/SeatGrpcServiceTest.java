@@ -1,6 +1,8 @@
 package com.ticketflow.seat_service.grpc;
 
+import com.ticketflow.seat_service.exception.EventNotFoundException;
 import com.ticketflow.seat_service.exception.SeatNotFoundException;
+import com.ticketflow.seat_service.service.SeatAvailabilityService;
 import com.ticketflow.seat_service.service.SeatReservationService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,11 +29,14 @@ class SeatGrpcServiceTest {
     @Mock
     private SeatReservationService seatReservationService;
 
+    @Mock
+    private SeatAvailabilityService seatAvailabilityService;
+
     private SeatGrpcService grpcService;
 
     @BeforeEach
     void setUp() {
-        grpcService = new SeatGrpcService(seatReservationService);
+        grpcService = new SeatGrpcService(seatReservationService, seatAvailabilityService);
     }
 
     @Test
@@ -77,6 +83,34 @@ class SeatGrpcServiceTest {
 
         assertEquals(Status.Code.NOT_FOUND, Status.fromThrowable(observer.error).getCode());
         assertTrue(observer.values.isEmpty());
+    }
+
+    @Test
+    void startsAvailabilityStreamForTheRequestedEvent() {
+        TestObserver<AvailabilityUpdate> observer = new TestObserver<>();
+        WatchAvailabilityRequest request = WatchAvailabilityRequest.newBuilder()
+                .setEventId(10L)
+                .build();
+
+        grpcService.watchAvailability(request, observer);
+
+        verify(seatAvailabilityService).watchAvailability(10L, observer);
+        assertFalse(observer.completed);
+    }
+
+    @Test
+    void reportsUnknownEventAsNotFound() {
+        doThrow(new EventNotFoundException(10L)).when(seatAvailabilityService).watchAvailability(
+                org.mockito.ArgumentMatchers.eq(10L),
+                org.mockito.ArgumentMatchers.any());
+        TestObserver<AvailabilityUpdate> observer = new TestObserver<>();
+        WatchAvailabilityRequest request = WatchAvailabilityRequest.newBuilder()
+                .setEventId(10L)
+                .build();
+
+        grpcService.watchAvailability(request, observer);
+
+        assertEquals(Status.Code.NOT_FOUND, Status.fromThrowable(observer.error).getCode());
     }
 
     private static class TestObserver<T> implements StreamObserver<T> {

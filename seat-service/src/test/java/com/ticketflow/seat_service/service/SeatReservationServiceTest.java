@@ -1,5 +1,6 @@
 package com.ticketflow.seat_service.service;
 
+import com.ticketflow.seat_service.entity.Seat;
 import com.ticketflow.seat_service.entity.SeatStatus;
 import com.ticketflow.seat_service.exception.SeatNotFoundException;
 import com.ticketflow.seat_service.repository.SeatRepository;
@@ -14,12 +15,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,21 +34,27 @@ class SeatReservationServiceTest {
     @Mock
     private SeatRepository seatRepository;
 
+    @Mock
+    private SeatAvailabilityService availabilityService;
+
     private SeatReservationService service;
 
     @BeforeEach
     void setUp() {
-        service = new SeatReservationService(seatRepository);
+        service = new SeatReservationService(seatRepository, availabilityService);
     }
 
     @Test
     void holdsAvailableSeat() {
+        Seat seat = mock(Seat.class);
         when(seatRepository.holdIfAvailable(
                 EVENT_ID, SEAT_ID, SeatStatus.AVAILABLE, SeatStatus.HELD)).thenReturn(1);
+        when(seatRepository.findByIdAndEvent_Id(SEAT_ID, EVENT_ID)).thenReturn(Optional.of(seat));
 
         assertTrue(service.holdSeat(EVENT_ID, SEAT_ID));
         verify(seatRepository).holdIfAvailable(
                 EVENT_ID, SEAT_ID, SeatStatus.AVAILABLE, SeatStatus.HELD);
+        verify(availabilityService).publish(seat);
     }
 
     @Test
@@ -69,10 +78,13 @@ class SeatReservationServiceTest {
     @Test
     void concurrentRequestsAllowOnlyOneHold() throws Exception {
         AtomicBoolean claimed = new AtomicBoolean();
+        Seat seat = mock(Seat.class);
         when(seatRepository.holdIfAvailable(
                 EVENT_ID, SEAT_ID, SeatStatus.AVAILABLE, SeatStatus.HELD))
                 .thenAnswer(invocation -> claimed.compareAndSet(false, true) ? 1 : 0);
         when(seatRepository.existsByIdAndEvent_Id(SEAT_ID, EVENT_ID)).thenReturn(true);
+        when(seatRepository.findByIdAndEvent_Id(SEAT_ID, EVENT_ID))
+                .thenReturn(Optional.of(seat));
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch ready = new CountDownLatch(2);
