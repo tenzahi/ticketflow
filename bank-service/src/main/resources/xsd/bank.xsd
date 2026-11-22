@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://ticketflow.com/bank"
+        xmlns:tns="http://ticketflow.com/bank"
+        elementFormDefault="qualified">
+
+    <!-- ========================= -->
+    <!-- AuthorizePayment Request  -->
+    <!-- ========================= -->
+    <xs:element name="AuthorizePaymentRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="paymentId" type="xs:string"/>
+                <xs:element name="amount" type="xs:decimal"/>
+                <xs:element name="currency" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ========================== -->
+    <!-- AuthorizePayment Response -->
+    <!-- ========================== -->
+    <xs:element name="AuthorizePaymentResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="transactionId" type="xs:string" minOccurs="0"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ====================== -->
+    <!-- RefundPayment Request  -->
+    <!-- ====================== -->
+    <xs:element name="RefundPaymentRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="paymentId" type="xs:string"/>
+                <xs:element name="amount" type="xs:decimal"/>
+                <xs:element name="currency" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ======================= -->
+    <!-- RefundPayment Response  -->
+    <!-- ======================= -->
+    <xs:element name="RefundPaymentResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="transactionId" type="xs:string" minOccurs="0"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
