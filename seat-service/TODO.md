@@ -8,7 +8,7 @@
 
 ## Team follow-ups
 
-- [ ] **Choose one PostgreSQL Compose configuration.** The seat branch uses PostgreSQL 16, `postgres/change_me`, and `docker/init.sql`; the Spectateur branch uses PostgreSQL 17, `ticketflow/ticketflow`, and `docker/init-db.sql`. Both SQL scripts create `ticket_db`, `seat_db`, and `bank_db`. Align the environment variables and keep one Compose/init-script setup.
+- [x] **Choose one PostgreSQL Compose configuration.** (Done at merge: PostgreSQL 16, `ticketflow/ticketflow`, `docker/init.sql`.) The seat branch uses PostgreSQL 16, `postgres/change_me`, and `docker/init.sql`; the Spectateur branch uses PostgreSQL 17, `ticketflow/ticketflow`, and `docker/init-db.sql`. Both SQL scripts create `ticket_db`, `seat_db`, and `bank_db`. Align the environment variables and keep one Compose/init-script setup.
 - [ ] **Locate or add the Dockerfile(s).** None were found in the repository branches or their history. For container networking, the seat service listens on gRPC `9090` and HTTP `8082`; containers should connect to PostgreSQL via `postgres:5432`, not `localhost`.
 - [ ] **Integrate ticket-service with gRPC.** Generate a client from the shared [seat.proto](src/main/proto/seat.proto), call `HoldSeat` directly (not through the HTTP gateway), configure a deadline, and handle `held: false` and gRPC errors. Use `seat-service:9090` between containers and `localhost:9090` for local runs.
 - [ ] **Agree on hold failure behavior.** A successful hold stays `HELD` indefinitely; there is currently no expiry, confirmation, or release RPC. Confirm whether that is sufficient for the purchase/payment stories. Add release or expiry behavior only if the team requires it.
