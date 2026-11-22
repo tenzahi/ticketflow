@@ -1,0 +1,256 @@
+openapi: 3.0.3
+info:
+  title: TicketFlow - API Spectateurs (ticket-service)
+  version: 1.0.0
+  description: |
+    API REST du ticket-service de TicketFlow, plateforme de billetterie de concerts
+    en microservices. Elle permet de gerer les spectateurs : creation, consultation,
+    modification et suppression (user story US-10).
+
+    - Le client passe par l'API Gateway (port 8080), qui redirige toutes les
+      requetes /api/v1/** vers le ticket-service (port 8081).
+    - Les donnees sont stockees dans PostgreSQL (base ticket_db, table spectateurs).
+    - Format des echanges : JSON.
+servers:
+  - url: http://localhost:8080
+    description: Via l'API Gateway (point d'entree unique, recommande)
+  - url: http://localhost:8081
+    description: ticket-service en direct
+tags:
+  - name: Spectateurs
+    description: Gestion des spectateurs (CRUD avec validation)
+paths:
+  /api/v1/spectateurs:
+    get:
+      tags: [Spectateurs]
+      summary: Lister tous les spectateurs
+      operationId: listerSpectateurs
+      responses:
+        '200':
+          description: Liste des spectateurs (vide s'il n'y en a aucun)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Spectateur'
+              example:
+                - id: 1
+                  nom: Ben Salah
+                  prenom: Amine
+                  email: amine@mail.com
+                - id: 2
+                  nom: Trabelsi
+                  prenom: Sarra
+                  email: sarra@mail.com
+    post:
+      tags: [Spectateurs]
+      summary: Creer un spectateur
+      description: L'id est genere automatiquement par la base ; un id envoye dans le corps est ignore.
+      operationId: creerSpectateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpectateurInput'
+            example:
+              nom: Ben Salah
+              prenom: Amine
+              email: amine@mail.com
+      responses:
+        '201':
+          description: Spectateur cree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Spectateur'
+              example:
+                id: 1
+                nom: Ben Salah
+                prenom: Amine
+                email: amine@mail.com
+        '400':
+          $ref: '#/components/responses/DonneesInvalides'
+        '409':
+          $ref: '#/components/responses/EmailDejaUtilise'
+  /api/v1/spectateurs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant du spectateur
+        schema:
+          type: integer
+          format: int64
+          example: 1
+    get:
+      tags: [Spectateurs]
+      summary: Consulter un spectateur
+      operationId: consulterSpectateur
+      responses:
+        '200':
+          description: Spectateur trouve
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Spectateur'
+              example:
+                id: 1
+                nom: Ben Salah
+                prenom: Amine
+                email: amine@mail.com
+        '404':
+          $ref: '#/components/responses/SpectateurIntrouvable'
+    put:
+      tags: [Spectateurs]
+      summary: Modifier un spectateur
+      description: Remplace le nom, le prenom et l'email. Les trois champs sont obligatoires.
+      operationId: modifierSpectateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpectateurInput'
+            example:
+              nom: Ben Salah
+              prenom: Amine
+              email: amine.bensalah@mail.com
+      responses:
+        '200':
+          description: Spectateur modifie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Spectateur'
+              example:
+                id: 1
+                nom: Ben Salah
+                prenom: Amine
+                email: amine.bensalah@mail.com
+        '400':
+          $ref: '#/components/responses/DonneesInvalides'
+        '404':
+          $ref: '#/components/responses/SpectateurIntrouvable'
+        '409':
+          $ref: '#/components/responses/EmailDejaUtilise'
+    delete:
+      tags: [Spectateurs]
+      summary: Supprimer un spectateur
+      operationId: supprimerSpectateur
+      responses:
+        '204':
+          description: Spectateur supprime (aucun contenu renvoye)
+        '404':
+          $ref: '#/components/responses/SpectateurIntrouvable'
+components:
+  schemas:
+    SpectateurInput:
+      type: object
+      description: Donnees envoyees pour creer ou modifier un spectateur
+      required: [nom, prenom, email]
+      properties:
+        nom:
+          type: string
+          description: Nom du spectateur (obligatoire, non vide)
+          example: Ben Salah
+        prenom:
+          type: string
+          description: Prenom du spectateur (obligatoire, non vide)
+          example: Amine
+        email:
+          type: string
+          format: email
+          description: Email valide et unique
+          example: amine@mail.com
+    Spectateur:
+      type: object
+      description: Spectateur tel qu'il est enregistre en base (table spectateurs)
+      required: [id, nom, prenom, email]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Identifiant genere automatiquement
+          example: 1
+        nom:
+          type: string
+          example: Ben Salah
+        prenom:
+          type: string
+          example: Amine
+        email:
+          type: string
+          format: email
+          example: amine@mail.com
+    Erreur:
+      type: object
+      description: Reponse d'erreur standard de Spring Boot
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          description: Code HTTP
+        error:
+          type: string
+          description: Libelle du code HTTP
+        message:
+          type: string
+          description: Explication de l'erreur
+        path:
+          type: string
+          description: URL appelee
+        errors:
+          type: array
+          description: Detail des champs invalides (erreurs de validation uniquement)
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              defaultMessage:
+                type: string
+  responses:
+    DonneesInvalides:
+      description: Donnees invalides (champ vide ou email mal forme)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erreur'
+          example:
+            timestamp: '2026-11-19T14:30:00.000Z'
+            status: 400
+            error: Bad Request
+            message: "Validation failed for object='spectateur'. Error count: 1"
+            path: /api/v1/spectateurs
+            errors:
+              - field: email
+                defaultMessage: L'email n'est pas valide
+    SpectateurIntrouvable:
+      description: Aucun spectateur avec cet id
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erreur'
+          example:
+            timestamp: '2026-11-19T14:30:00.000Z'
+            status: 404
+            error: Not Found
+            message: 'Spectateur introuvable : 99'
+            path: /api/v1/spectateurs/99
+    EmailDejaUtilise:
+      description: L'email est deja utilise par un autre spectateur
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erreur'
+          example:
+            timestamp: '2026-11-19T14:30:00.000Z'
+            status: 409
+            error: Conflict
+            message: 'Email deja utilise : amine@mail.com'
+            path: /api/v1/spectateurs
